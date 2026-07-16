@@ -68,7 +68,7 @@ function App() {
                     muted
                     className="max-w-screen min-h-screen h-[calc(100dvh-2px)] w-full object-cover -z-2"
                 >
-                    <source src="public/assets/video1.mp4" type="video/mp4" />
+                    <source src="assets/video1.mp4" type="video/mp4" />
                 </video>
             </div>
 
@@ -118,7 +118,7 @@ function App() {
                 <div id="taskList" className="flex flex-col  gap-5  h-[calc(100vh-380px)] overflow-y-auto   scrollbar-thin  ">
                     {filteredTasks.map((item) => (
                         <div key={item.id} className="bg-[#C4BABA40]  flex flex-wrap border max-w-183.75 w-full ml-70 rounded-[85px] justify-between   items-center px-8.25 py-3 ">
-                            <p className={`text-white text-[40px] max-w-110 overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] 
+                            <p className={`text-white text-[40px] max-w-110 overflow-x-auto scrollbar-none [-ms-overflow-style:none] 
             [::-webkit-scrollbar]:hidden w-full ${item.status === "completed" ? "line-through" : ""}`} >{item.text} </p>
 
                             <div className=" flex gap-5 ">
@@ -140,9 +140,9 @@ function App() {
                 </div>
             </section>
             <div className="flex  absolute bottom-6 right-27.75  ">
-                <img src="public/assets/img5.png" alt="logo" className="max-w-10.75 h-10.75 w-full " />
+                <img src="assets/img5.png" alt="logo" className="max-w-10.75 h-10.75 w-full " />
                 <p className="text-[32px] font-normal underline text-white">POMODORO</p>
-                <img src="public/assets/img6.png" alt="logo" className="max-w-16.25 w-full  bottom-4.5" />
+                <img src="assets/img6.png" alt="logo" className="max-w-16.25 w-full  bottom-4.5" />
             </div>
         </>
     )
