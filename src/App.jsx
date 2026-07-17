@@ -1,10 +1,12 @@
 import { useState, useEffect } from "react";
 import swal from 'sweetalert';
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 import "./App.css";
 
 import { IoMdAddCircle } from "react-icons/io";
 import { RiArrowDropDownLine } from "react-icons/ri";
-import { MdDelete, MdOutlineRadioButtonUnchecked, MdEdit } from "react-icons/md";
+import { MdDelete, MdOutlineRadioButtonUnchecked, MdEdit, MdCheck, MdClose } from "react-icons/md";
 import { FaCheckCircle } from "react-icons/fa";
 
 
@@ -20,20 +22,40 @@ function App() {
     }, [tasks]);
 
     const [filterTask, setFilterTask] = useState("ALL")
+    const [editId, setEditId] = useState(null)
+    const [editText, setEditText] = useState("")
 
     const addTask = () => {
         if (task.trim() === "") return;
         const newTask = {
             id: Date.now(), text: task, status: "pending"
         };
+        if (task.length > 150) {
+            toast.warning("Maximum 150 characters allowed!");
+            return;
+        }
+
         setTasks([...tasks, newTask]);
         setTask("");
     };
 
     const deleteTask = (id) => {
-        setTasks(tasks.filter((item) => item.id !== id));
-    };
+        swal({
+            title: "Delete Task?",
+            text: "This action cannot be undone.",
+            icon: "warning",
+            buttons: true,
+            dangerMode: true,
+        }).then((willDelete) => {
+            if (willDelete) {
+                setTasks(tasks.filter((item) => item.id !== id));
 
+                swal("Task deleted!", {
+                    icon: "success",
+                });
+            }
+        });
+    };
 
     const statusCheck = (id) => {
         const updateTasks = tasks.map((item) => {
@@ -48,6 +70,39 @@ function App() {
             return item;
         });
         setTasks(updateTasks);
+    };
+
+    const startEditing = (task) => {
+        setEditId(task.id);
+        setEditText(task.text);
+    };
+
+    const saveTask = () => {
+        if (editText.trim() === "") {
+            alert("Task can not be empty");
+            return;
+        }
+
+        if (editText.length > 150) {
+            toast.warning("Max Character limit upto 150");
+            return;
+        }
+        const updatedTask = tasks.map((item) => {
+            if (item.id === editId) {
+                return { ...item, text: editText };
+            }
+            return item;
+        });
+
+        setTasks(updatedTask);
+        setEditId(null);
+        setEditText("");
+
+    };
+
+    const cancelEdit = () => {
+        setEditId(null);
+        setEditText("");
     };
 
 
@@ -117,23 +172,60 @@ function App() {
 
                 <div id="taskList" className="flex flex-col  gap-5  h-[calc(100vh-380px)] overflow-y-auto   scrollbar-thin  ">
                     {filteredTasks.map((item) => (
-                        <div key={item.id} className="bg-[#C4BABA40]  flex flex-wrap border max-w-183.75 w-full ml-70 rounded-[85px] justify-between   items-center px-8.25 py-3 ">
-                            <p className={`text-white text-[40px] max-w-110 overflow-x-auto scrollbar-none [-ms-overflow-style:none] 
-            [::-webkit-scrollbar]:hidden w-full ${item.status === "completed" ? "line-through" : ""}`} >{item.text} </p>
+                        <div key={item.id} className="bg-[#C4BABA40]  flex flex-wrap border max-w-183.75 w-full mx-auto rounded-[85px] justify-between   items-center px-8.25 py-3 ">
+
+                            {editId === item.id ? (
+
+                                <input
+                                    type="text"
+                                    value={editText}
+                                    Length={150}
+                                    onChange={(e) => setEditText(e.target.value)}
+                                    className="text-white text-[40px] bg-transparent border-b border-white outline-none max-w-110 w-full"
+                                    autoFocus />
+                            ) : (
+                                <p
+                                    className={`text-white text-[40px] max-w-110 break-all  scrollbar-none  w-full ${item.status === "completed" ? "line-through" : ""
+                                        }`}>
+                                    {item.text}
+                                </p>
+                            )}
 
                             <div className=" flex gap-5 ">
-                                <button onClick={() => statusCheck(item.id)} >
-                                    {item.status === "pending" ? (
-                                        <MdOutlineRadioButtonUnchecked className="text-5xl text-white cursor-pointer" />
-                                    ) : (
-                                        <FaCheckCircle className="text-5xl text-white cursor-pointer" />
-                                    )}
-                                </button>
-                                <button><MdEdit className="text-5xl text-white cursor-pointer" /></button>
 
-                                <button onClick={() => deleteTask(item.id)}>
-                                    <MdDelete className="text-5xl text-white cursor-pointer" />
-                                </button>
+                                {editId === item.id ? (
+                                    <>
+                                        <button onClick={saveTask}>
+                                            <MdCheck className="text-5xl text-white cursor-pointer" />
+                                        </button>
+
+                                        <button onClick={cancelEdit}>
+                                            <MdClose className="text-5xl text-white cursor-pointer" />
+                                        </button>
+                                    </>
+                                ) : (
+                                    <>
+                                        <button onClick={() => statusCheck(item.id)} >
+                                            {item.status === "pending" ? (
+                                                <MdOutlineRadioButtonUnchecked className="text-5xl text-white cursor-pointer" />
+                                            ) : (
+                                                <FaCheckCircle className="text-5xl text-white cursor-pointer" />
+                                            )}
+
+                                        </button>
+                                        {item.status === "pending" && (
+                                            <button onClick={() => startEditing(item)}>
+                                                <MdEdit className="text-5xl text-white cursor-pointer" />
+                                            </button>
+                                        )}
+                                        <button onClick={() => deleteTask(item.id)}>
+                                            <MdDelete className="text-5xl text-white cursor-pointer" />
+                                        </button>
+
+                                    </>
+                                )}
+
+
                             </div>
                         </div>
                     ))}
@@ -144,6 +236,11 @@ function App() {
                 <p className="text-[32px] font-normal underline text-white">POMODORO</p>
                 <img src="assets/img6.png" alt="logo" className="max-w-16.25 w-full  bottom-4.5" />
             </div>
+            <ToastContainer
+                position="top-right"
+                autoClose={2000}
+                theme="dark"
+            />
         </>
     )
 };
