@@ -80,7 +80,7 @@ function App() {
     };
 
    const statusCheck = async (id) => {
-    const currentTask = tasks.find(item => item.id === id);
+    const currentTask = tasks.find(item => item._id === id);
     if (!currentTask) return;
     const newStatus =
         currentTask.status === "pending"
@@ -104,7 +104,7 @@ function App() {
 };
 
     const startEditing = (taskItem) => {
-        setEditId(taskItem.id);
+        setEditId(taskItem._id);
         setEditText(taskItem.text);
     };
 
@@ -200,9 +200,9 @@ function App() {
 
                 <div id="taskList" className="flex flex-col  gap-5  h-[calc(100vh-380px)] overflow-y-auto   scrollbar-thin  ">
                     {filteredTasks.map((item) => (
-                        <div key={item.id} className="bg-[#C4BABA40]  flex flex-wrap border max-w-183.75 w-full mx-auto rounded-[85px] justify-between   items-center px-8.25 py-3 ">
+                        <div key={item._id} className="bg-[#C4BABA40]  flex flex-wrap border max-w-183.75 w-full mx-auto rounded-[85px] justify-between   items-center px-8.25 py-3 ">
 
-                            {editId === item.id ? (
+                            {editId === item._id ? (
                                 <input
                                     type="text"
                                     value={editText}
@@ -220,7 +220,7 @@ function App() {
 
                             <div className=" flex gap-5 ">
 
-                                {editId === item.id ? (
+                                {editId === item._id ? (
                                     <>
                                         <button onClick={saveTask}>
                                             <MdCheck className="text-5xl text-white cursor-pointer" />
@@ -232,7 +232,7 @@ function App() {
                                     </>
                                 ) : (
                                     <>
-                                        <button onClick={() => statusCheck(item.id)} >
+                                        <button onClick={() => statusCheck(item._id)} >
                                             {item.status === "pending" ? (
                                                 <MdOutlineRadioButtonUnchecked className="text-5xl text-white cursor-pointer" />
                                             ) : (
@@ -245,7 +245,7 @@ function App() {
                                                 <MdEdit className="text-5xl text-white cursor-pointer" />
                                             </button>
                                         )}
-                                        <button onClick={() => deleteTask(item.id)}>
+                                        <button onClick={() => deleteTask(item._id)}>
                                             <MdDelete className="text-5xl text-white cursor-pointer" />
                                         </button>
 
