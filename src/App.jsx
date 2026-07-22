@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import swal from 'sweetalert';
+import Swal from 'sweetalert2';
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import "./App.css";
@@ -8,103 +8,140 @@ import { IoMdAddCircle } from "react-icons/io";
 import { RiArrowDropDownLine } from "react-icons/ri";
 import { MdDelete, MdOutlineRadioButtonUnchecked, MdEdit, MdCheck, MdClose } from "react-icons/md";
 import { FaCheckCircle } from "react-icons/fa";
-
+import { BASE_URL } from "./lib/config";
 
 function App() {
-    const [task, setTask] = useState("")
-
-    const [tasks, setTasks] = useState(() => {
-        return JSON.parse(localStorage.getItem("tasks")) || []
-    });
+    const [task, setTask] = useState("");
+    const [tasks, setTasks] = useState([]);
+    const [filterTask, setFilterTask] = useState("ALL");
+    const [editId, setEditId] = useState(null);
+    const [editText, setEditText] = useState("");
 
     useEffect(() => {
-        localStorage.setItem("tasks", JSON.stringify(tasks));
-    }, [tasks]);
+        fetchTasks();
+    }, []);
 
-    const [filterTask, setFilterTask] = useState("ALL")
-    const [editId, setEditId] = useState(null)
-    const [editText, setEditText] = useState("")
+    const fetchTasks = async () => {
+        try {
+            const response = await fetch(`${BASE_URL}/tasks`);
+            const data = await response.json();
+            setTasks(data);
+        } catch (error) {
+            console.log(error);
+        }
+    };
 
-    const addTask = () => {
+    const addTask = async () => {
         if (task.trim() === "") return;
-        const newTask = {
-            id: Date.now(), text: task, status: "pending"
-        };
         if (task.length > 150) {
             toast.warning("Maximum 150 characters allowed!");
             return;
         }
-
-        setTasks([...tasks, newTask]);
-        setTask("");
+        try {
+            const response = await fetch(`${BASE_URL}/tasks`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({ text: task })
+            });
+            if (!response.ok) throw new Error("Failed to add task");
+            toast.success("Task Added");
+            setTask("");
+            fetchTasks();
+        } catch (error) {
+            console.log(error);
+            toast.error("Couldn't add task.");
+        }
     };
 
-    const deleteTask = (id) => {
-        swal({
+    const deleteTask = async (id) => {
+        const result = await Swal.fire({
             title: "Delete Task?",
             text: "This action cannot be undone.",
             icon: "warning",
-            buttons: true,
-            dangerMode: true,
-        }).then((willDelete) => {
-            if (willDelete) {
-                setTasks(tasks.filter((item) => item.id !== id));
+            showDenyButton: true,
 
-                swal("Task deleted!", {
-                    icon: "success",
+  confirmButtonText: 'Yes',
+  denyButtonText: 'No',
+        });
+
+        if (result.isConfirmed) {
+            try {
+                await fetch(`${BASE_URL}/tasks/${id}`, {
+                    method: "DELETE",
                 });
+                fetchTasks();
+                Swal.fire("Task deleted!", { icon: "success" });
+            } catch (error) {
+                console.log(error);
             }
-        });
-    };
-
-    const statusCheck = (id) => {
-        const updateTasks = tasks.map((item) => {
-            if (item.id === id) {
-                return {
-                    ...item,
-                    status:
-                        item.status === "pending" ? "completed" : "pending"
-
-                };
-            }
-            return item;
-        });
-        setTasks(updateTasks);
-    };
-
-    const startEditing = (task) => {
-        setEditId(task.id);
-        setEditText(task.text);
-    };
-
-    const saveTask = () => {
-        if (editText.trim() === "") {
-            alert("Task can not be empty");
-            return;
         }
+    };
 
-        if (editText.length > 150) {
-            toast.warning("Max Character limit upto 150");
-            return;
-        }
-        const updatedTask = tasks.map((item) => {
-            if (item.id === editId) {
-                return { ...item, text: editText };
-            }
-            return item;
+   const statusCheck = async (id) => {
+    const currentTask = tasks.find(item => item.id === id);
+    if (!currentTask) return;
+    const newStatus =
+        currentTask.status === "pending"
+            ? "completed"
+            : "pending";
+    try {
+        await fetch(`${BASE_URL}/tasks/${id}`, {
+            method: "PUT",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                status: newStatus
+            })
         });
+        fetchTasks();
+    }
+    catch (error) {
+        console.log(error);
+    }
+};
 
-        setTasks(updatedTask);
+    const startEditing = (taskItem) => {
+        setEditId(taskItem.id);
+        setEditText(taskItem.text);
+    };
+
+  const saveTask = async () => {
+
+    if (editText.trim() === "") {
+        alert("Task cannot be empty");
+        return;
+    }
+    if (editText.length > 150) {
+        toast.warning("Max Character limit upto 150");
+        return;
+    }
+    try {
+        await fetch(`${BASE_URL}/tasks/${editId}`, {
+            method: "PUT",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                text: editText
+            })
+        });
         setEditId(null);
         setEditText("");
+        fetchTasks();
+    }
+    catch (error) {
+      console.log(error);
 
-    };
+    }
 
+};
     const cancelEdit = () => {
         setEditId(null);
         setEditText("");
     };
-
 
     const filteredTasks = tasks.filter((item) => {
         if (filterTask === "Completed") return item.status === "completed";
@@ -112,24 +149,15 @@ function App() {
         return true;
     });
 
-
-
     return (
         <>
             <div className="video">
-                <video
-                    autoPlay
-                    loop
-                    muted
-                    className="max-w-screen min-h-screen h-[calc(100dvh-2px)] w-full object-cover -z-2"
-                >
+                <video autoPlay loop muted className="max-w-screen min-h-screen h-[calc(100dvh-2px)] w-full object-cover -z-2">
                     <source src="assets/video1.mp4" type="video/mp4" />
                 </video>
             </div>
 
             <section className="absolute top-14.5 z-10 flex flex-col w-full gap-12.5 mx-auto">
-
-
                 <div className="bg-[#D9D9D980] backdrop-blur-[32px] rounded-[85px] border border-[#FFFFFFB2] max-w-109 h-23.25 w-full mx-auto">
                     <div
                         style={{ fontFamily: "Baloo, cursive" }}
@@ -175,11 +203,10 @@ function App() {
                         <div key={item.id} className="bg-[#C4BABA40]  flex flex-wrap border max-w-183.75 w-full mx-auto rounded-[85px] justify-between   items-center px-8.25 py-3 ">
 
                             {editId === item.id ? (
-
                                 <input
                                     type="text"
                                     value={editText}
-                                    Length={150}
+                                    length={150}
                                     onChange={(e) => setEditText(e.target.value)}
                                     className="text-white text-[40px] bg-transparent border-b border-white outline-none max-w-110 w-full"
                                     autoFocus />
@@ -242,10 +269,9 @@ function App() {
                 theme="dark"
             />
         </>
-    )
-};
+    );
+}
 
-
-export default App
+export default App;
 
 
