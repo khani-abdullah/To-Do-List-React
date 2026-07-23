@@ -28,7 +28,9 @@ function Signup() {
         }
 
         try {
-            const response = await axios.post(`${BASE_URL}/auth/signup`, formData);
+            const response = await axios.post(`${BASE_URL}/auth/signup`, formData); 
+
+            console.log(response.data);
 
             localStorage.setItem("token",
                 response.data.token
